@@ -234,7 +234,7 @@ while (!isRoomValid) {
 socket.emit('join', { playerName, roomId });
 document.getElementById("player1").innerHTML = "Player 1: "+playerName;
 
-let playerSymbol = 'X'; // Add this variable to store the player's symbol
+let playerSymbol = 'X'; 
 
 
 // Event listener for receiving moves from the server
@@ -280,7 +280,7 @@ socket.on('roomFull', (message) => {
 // Update the 'gameStart' event listener
 socket.on('gameStart', ({ players, nextPlayer }) => {
     document.getElementById("roomFullMessage").innerHTML = ''; 
-    document.getElementById("turnOf").innerHTML = "Waiting For Another Player";
+    document.getElementById("turnOf").innerHTML = "Share Room ID With Another Player. Waiting For Another Player To Join";
     let forcheck = document.getElementById("win-text").innerHTML = "";
     for(var i = 0;i<players.length;i++){
         var j = i+1;
