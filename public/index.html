@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicTac Toy</title>
+    <!-- <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script> -->
+</head>
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+
+    }
+    .container{
+        height: 100vh;
+        width: 100vw;
+        background: #28282B;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+    }
+    .pad{
+        /* background: white; */
+        display: grid;
+        grid-template-columns: auto auto auto;
+    }
+    .pad .box{
+        width: 100px;
+        height: 100px;
+        font-size: 35px;
+        font-weight: bold;
+        color: white;
+        font-family: Arial, Helvetica, sans-serif;
+        display: grid;
+        place-items: center;
+        user-select: none;
+    }
+    .box:hover{
+        cursor: pointer;
+    }
+    .b1{
+        border-bottom: 2px solid cyan;
+        border-right: 2px solid cyan;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    .b2{
+        border-bottom: 2px solid cyan;
+        border-right: 2px solid cyan;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    .b3{
+        border-bottom: 2px solid cyan;
+        border-left: 2px solid transparent;
+        border-top: 2px solid transparent;
+        border-right: 2px solid transparent;
+    }
+    .b4{
+        border-bottom: 2px solid cyan;
+        border-right: 2px solid cyan;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    .b5{
+        border-bottom: 2px solid cyan;
+        border-right: 2px solid cyan;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    .b6{
+        border-bottom: 2px solid cyan;
+        border-right: 2px solid transparent;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    .b7{
+        border-bottom: 2px solid transparent;
+        border-right: 2px solid cyan;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    .b8{
+        border-bottom: 2px solid transparent;
+        border-right: 2px solid cyan;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    .b9{
+        border-bottom: 2px solid transparent;
+        border-right: 2px solid transparent;
+        border-top: 2px solid transparent;
+        border-left: 2px solid transparent;
+    }
+    #turn-text{
+        position: relative;
+        top: 100px;
+        font-size: 22px;
+        font-weight: bold;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        color: white;
+        text-transform: uppercase;
+    }
+    #win-text{
+        position: absolute;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 22px;
+        font-weight: bold;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        color: white;
+        text-transform: uppercase;
+    }
+    .canva{
+        /* background: white;    */
+        width: 300px;
+        height: 300px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-55%);
+        
+    }
+    .play-again{
+        background: yellow;
+        border: none;
+        padding: 5px 10px;
+        font-size: 23px;
+        text-shadow: 1px 1px 5px #eee;
+        cursor: pointer;
+        border-radius: 2px;
+        font-weight: bold;
+        &:hover{
+            background: rgb(192, 192, 4);
+        }
+    }
+
+    /* Add these styles to your existing CSS or in a separate file */
+
+    #roomFullMessage {
+        color: red;
+        margin-bottom: 10px; /* Adjust spacing as needed */
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    #turn-text,#turnOf {
+        /* Your existing styles for turn text */
+        position: relative;
+        top: 100px;
+        font-size: 22px;
+        font-weight: bold;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        color: white;
+        text-transform: uppercase;
+    }
+
+    .play-again {
+        background: yellow;
+        border: none;
+        padding: 5px 10px;
+        font-size: 23px;
+        text-shadow: 1px 1px 5px #eee;
+        cursor: pointer;
+        border-radius: 2px;
+        font-weight: bold;
+        &:hover {
+            background: rgb(192, 192, 4);
+        }
+    }
+    #win-text{
+        width:98vw;
+        font-size: 17px;
+    }
+</style>
+
+</style>
+<body>
+    <div class="container">
+        <div id="roomFullMessage" style="color: red;"></div>
+        <div class=""><p id="win-text"><span id="player1"></span><br><span id="player2"></span></p></div>
+        <div class="pad">
+            <div class="box b1" ></div>
+            <div class="box b2"></div>
+            <div class="box b3"></div>
+            <div class="box b4"></div>
+            <div class="box b5"></div>
+            <div class="box b6"></div>
+            <div class="box b7"></div>
+            <div class="box b8"></div>
+            <div class="box b9"></div>
+        </div>
+
+        <p id="turn-text"></p>
+        <p id="turnOf"></p>
+        <canvas class="canva" id="myCanvas"></canvas>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+var box = document.getElementsByClassName("box");
+ const socket = io();
+ const joinSound = new Audio('beep.mp3');
+ const tie = new Audio('tiebeep.mp3');
+ const victory = new Audio('victory.mp3');
+// Prompt for player name
+let isWon = false;
+let isNameValid = false;
+let isRoomValid = false;
+let playerName;
+let roomId;
+
+while (!isNameValid) {
+    playerName = prompt('Enter your name:');
+    if (playerName !== null && playerName.trim() !== '') {
+        isNameValid = true;
+    } else {
+        alert('Please enter a valid name.');
+    }
+}
+while (!isRoomValid) {
+    roomId = prompt('Enter Room ID:');
+    if (roomId !== null && roomId.trim() !== '') {
+        isRoomValid = true;
+    } else {
+        alert('Please enter a valid Room ID.');
+    }
+}
+
+
+socket.emit('join', { playerName, roomId });
+document.getElementById("player1").innerHTML = "Player 1: "+playerName;
+
+let playerSymbol = 'X'; // Add this variable to store the player's symbol
+
+
+// Event listener for receiving moves from the server
+socket.on('makeMove', (moveData) => {
+    updateGameBoard(moveData.boxIndex, moveData.symbol);
+    joinSound.play();
+    checkWin();
+});
+let trackuser;
+// Event listener for updating players and turn information
+socket.on('updatePlayers', ({ players, nextPlayer }) => {
+    trackuser = nextPlayer.name;
+    const currentPlayer = players.find(player => player.id === socket.id);
+
+    if (currentPlayer) {
+        if (nextPlayer && currentPlayer.id === nextPlayer.id) {
+            document.getElementById("turnOf").innerHTML = "Now Your Turn "+ currentPlayer.name + " (" + currentPlayer.symbol + ")";
+        } else {
+            document.getElementById("turnOf").innerHTML = "Now Turn of: " + nextPlayer.name + " (" + nextPlayer.symbol + ")";
+        }
+    }
+});
+
+window.addEventListener('beforeunload', () => {
+        
+        socket.emit('disconnecting', { userId: socket.id });
+        createCanva();
+    });
+
+    window.addEventListener('unload', () => {
+       
+        socket.emit('disconnecting', { userId: socket.id });
+        createCanva();
+    });
+
+
+// Update the 'roomFull' event listener
+socket.on('roomFull', (message) => {
+    document.getElementsByClassName("container")[0].innerHTML = "<h1>Room has been full</h1>";
+    document.getElementsByClassName("container")[0].style.color= "red";
+});
+
+// Update the 'gameStart' event listener
+socket.on('gameStart', ({ players, nextPlayer }) => {
+    document.getElementById("roomFullMessage").innerHTML = ''; 
+    document.getElementById("turnOf").innerHTML = "Waiting For Another Player";
+    let forcheck = document.getElementById("win-text").innerHTML = "";
+    for(var i = 0;i<players.length;i++){
+        var j = i+1;
+        document.getElementById("win-text").innerHTML += `<span>Player ${j}: ${players[i].name} (${players[i].symbol})</span><br>`; 
+    }
+    for(let i = 0; i<9;i++){
+            box[i].innerHTML = "";
+    }
+    document.getElementById("myCanvas").remove();
+
+});
+let turnoff = document.getElementById("turn-text");
+socket.on('gameReset',({ players, nextPlayer })=>{
+    let forcheck = document.getElementById("win-text").innerHTML = "";
+    for(var i = 0;i<players.length;i++){
+        var j = i+1;
+        document.getElementById("win-text").innerHTML += `<span>Player ${j}: ${players[i].name} (${players[i].symbol})</span><br>`; 
+    }
+    
+    for(let i = 0; i<9;i++){
+            box[i].innerHTML = "";
+    }
+    turnoff.innerHTML =" ";
+    document.getElementById('turnOf').style.display = "block";
+    document.getElementById("myCanvas").remove();
+    victory.pause();
+    victory.currentTime = 0;
+    tie.pause();
+    tie.currentTime = 0;
+    isWon = false;
+    
+});
+function playagain(){
+        
+        joinSound.play();
+        socket.emit('playAgain',{roomId});
+}
+
+
+        const player1_c = "Player1";
+        const player2_c = "Player1";
+
+        document.getElementById("turnOf").innerHTML = "Waiting For Another Player";
+            
+            let fTurn = 'X';
+            let box1 = document.getElementsByClassName("box")[0];
+            let box2 = document.getElementsByClassName("box")[1];
+            let box3 = document.getElementsByClassName("box")[2];
+            let box4 = document.getElementsByClassName("box")[3];
+            let box5 = document.getElementsByClassName("box")[4];
+            let box6 = document.getElementsByClassName("box")[5];
+            let box7 = document.getElementsByClassName("box")[6];
+            let box8 = document.getElementsByClassName("box")[7];
+            let box9 = document.getElementsByClassName("box")[8];
+            let turntext = document.getElementById("win-text");
+            
+
+            
+            function drawlineH(x,y){
+            let c = document.getElementById("myCanvas");
+            c.style.display  ="block";
+            let ctx = c.getContext("2d");
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, y);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = "white";
+            ctx.stroke(); 
+            }
+            function drawlineV(x,y){
+            let c = document.getElementById("myCanvas");
+            let ctx = c.getContext("2d");
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, 0);
+            ctx.strokeStyle = "white";
+            ctx.stroke(); 
+            }
+            function drawlineD(x,y){
+            let c = document.getElementById("myCanvas");
+            let ctx = c.getContext("2d");
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.moveTo(x, 0);
+            ctx.lineTo(y, 150);
+            ctx.strokeStyle = "white";
+            ctx.stroke(); 
+            }
+            
+
+            // drawlineD(0,300);
+            
+            
+            
+
+            function addVal(e) {
+        if (e.target.innerHTML !== 'X' && e.target.innerHTML !== 'O') {
+            // Send the move data to the server
+            socket.emit('move', { boxIndex: Array.from(box).indexOf(e.target), symbol: playerSymbol });
+        }
+    }
+
+    // Add this function to update the game board based on move data
+    function updateGameBoard(boxIndex, symbol) {
+        // Get the box element based on the index
+        const clickedBox = document.getElementsByClassName("box")[boxIndex];
+        // Update the innerHTML of the box with the received symbol
+        clickedBox.innerHTML = symbol;
+    }
+
+
+    function createCanva() {
+            var newCanvas = document.createElement("canvas");
+            newCanvas.id = "myCanvas";
+            newCanvas.classList.add("canva");
+            document.getElementsByClassName('container')[0].appendChild(newCanvas);
+        }
+
+
+
+
+        function checkWin(){
+            if(box1.innerHTML != '' && box2.innerHTML != '' && box3.innerHTML != '' && box1.innerHTML == box2.innerHTML && box2.innerHTML == box3.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner<center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+               
+                isWon = true;
+                drawlineH(300,23); 
+                victory.play();
+
+            }else if(box1.innerHTML != '' && box4.innerHTML != '' && box7.innerHTML != '' && box1.innerHTML == box4.innerHTML && box4.innerHTML == box7.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner<center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+                isWon = true;
+                drawlineV(47,500);
+                victory.play();
+
+                
+            }else if(box1.innerHTML != '' && box5.innerHTML != '' && box9.innerHTML != '' && box1.innerHTML == box5.innerHTML && box5.innerHTML == box9.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner<center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+                isWon = true;
+                drawlineD(0,300);
+                victory.play();
+                
+            }else if(box2.innerHTML != '' && box5.innerHTML != '' && box8.innerHTML != '' && box2.innerHTML == box5.innerHTML && box5.innerHTML == box8.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner<center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+                isWon = true;
+                drawlineV(150,500);
+                victory.play();
+            }
+
+             if(box3.innerHTML != '' && box6.innerHTML != '' && box9.innerHTML != '' && box3.innerHTML == box6.innerHTML && box6.innerHTML == box9.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner<center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+                isWon = true;
+                drawlineV(253,500);
+                victory.play();
+            }
+
+           if(box4.innerHTML != '' && box5.innerHTML != '' && box6.innerHTML != '' && box4.innerHTML == box5.innerHTML && box5.innerHTML == box6.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner<center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+                isWon = true;
+                drawlineH(300,75);
+                victory.play();
+            }
+
+            if(box7.innerHTML != '' && box5.innerHTML != '' && box3.innerHTML != '' && box7.innerHTML == box5.innerHTML && box5.innerHTML == box3.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner<center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+                isWon = true;
+                drawlineD(300,0);
+                victory.play();
+            }else if(box7.innerHTML != '' && box8.innerHTML != '' && box9.innerHTML != '' && box7.innerHTML == box8.innerHTML && box8.innerHTML == box9.innerHTML){
+                turntext.innerHTML = "<center>"+trackuser +" is Winner </center>";
+                document.getElementById('turnOf').style.display = "none";
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                createCanva();
+                isWon = true;
+                drawlineH(300,127);
+                victory.play();
+            }
+
+            if(box1.innerHTML != '' && box2.innerHTML != '' && box3.innerHTML != '' && box4.innerHTML != '' && box5.innerHTML != '' && box6.innerHTML != '' && box7.innerHTML != '' && box8.innerHTML != '' && box9.innerHTML != '' && isWon == false){
+                turntext.innerHTML = "<center>TIE</center>";
+                document.getElementById('turnOf').style.display = "none";
+                createCanva();
+                turnoff.innerHTML = `<button class="play-again" onclick="playagain()">Play Again</button>`;
+                tie.play();
+            }
+
+        }
+       
+        // var box = document.getElementsByClassName("box");
+        for(let i = 0; i<9;i++){
+            box[i].addEventListener("click",addVal);
+        }
+    </script>
+</body>
+</html>
