@@ -146,7 +146,7 @@ function startGame(roomId) {
 app.use(express.static(path.resolve("./public")));
 
 app.get("/", (req, res) => {
-    res.sendFile("/public/index.html");
+    res.sendFile("../client/index.html");
 });
 
 server.listen(process.env.PORT || 5001);
